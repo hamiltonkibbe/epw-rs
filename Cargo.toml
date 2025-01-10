@@ -1,0 +1,30 @@
+[package]
+name = "epw-rs"
+version = "0.1.0"
+edition = "2021"
+
+categories = [
+    "encoding",
+    "parser-implementations"
+]
+description = "Rust parser for Energy Plus Weather file format"
+repository = "https://github.com/hamiltonkibbe/epw-rs"
+include = [
+    "Cargo.toml",
+    "LICENSE.txt",
+    "README.md",
+    "src/**/*.rs",
+    "examples/*.rs"
+]
+
+license = "MIT"
+readme = "README.md"
+rust-version = "1.80.0"
+
+[dependencies]
+chrono = { version = "0.4.39", features = ["serde"] }
+
+[lib]
+name = "epw_rs"
+path = "src/lib.rs"
+
