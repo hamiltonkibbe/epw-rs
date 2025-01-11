@@ -1,4 +1,7 @@
 # epw-rs
+[![Crate][crate_img]][crate_link]
+[![Documentation][docs_img]][docs_link]
+[![License][license_img]][license_file]
 
 ## Parser for the Energy Plus Weather file format
 
@@ -35,6 +38,20 @@ fn main() {
     let epw = EPWFile::from_path("./data/USA_FL_Tampa_TMY2.epw").unwrap();
     let df = epw.data.to_dataframe();
 }
+
+// Output: 
+┌─────────────────────┬──────────────────────┬───────────────────────┬───────────────────┬───┬───────────────────────┬────────────┬──────────────────────────┬────────┐
+│ timestamp           ┆ dry_bulb_temperature ┆ dew_point_temperature ┆ relative_humidity ┆ … ┆ aerosol_optical_depth ┆ snow_depth ┆ days_since_last_snowfall ┆ albedo │
+│ ---                 ┆ ---                  ┆ ---                   ┆ ---               ┆   ┆ ---                   ┆ ---        ┆ ---                      ┆ ---    │
+│ datetime[ms]        ┆ f64                  ┆ f64                   ┆ f64               ┆   ┆ f64                   ┆ f64        ┆ f64                      ┆ f64    │
+╞═════════════════════╪══════════════════════╪═══════════════════════╪═══════════════════╪═══╪═══════════════════════╪════════════╪══════════════════════════╪════════╡
+│ 1987-01-01 05:00:00 ┆ 20.6                 ┆ 18.9                  ┆ 90.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+│ 1987-01-01 06:00:00 ┆ 20.0                 ┆ 18.3                  ┆ 90.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+│ 1987-01-01 07:00:00 ┆ 20.0                 ┆ 17.2                  ┆ 84.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+│ 1987-01-01 08:00:00 ┆ 18.3                 ┆ 16.1                  ┆ 87.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+│ 1987-01-01 09:00:00 ┆ 17.8                 ┆ 15.0                  ┆ 84.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+│ …                   ┆ …                    ┆ …                     ┆ …                 ┆ … ┆ …                     ┆ …          ┆ …                        ┆ …      │
+
 ```
 
 For a more detailed example see [examples/polars.rs](examples/polars.rs).
@@ -45,3 +62,12 @@ For a more detailed example see [examples/polars.rs](examples/polars.rs).
 ## Features
 - [x] Read Header and Data
 - [ ] Lazy load data
+
+
+<!-- Badges -->
+[crate_link]: https://crates.io/crates/epw-rs "Crate listing"
+[crate_img]: https://img.shields.io/crates/v/epw-rs?style=for-the-badge "Crate badge"
+[docs_link]: https://docs.rs/bitvec/latest/epw-rs "Crate documentation"
+[docs_img]: https://img.shields.io/docsrs/epw-rs/latest.svg?style=for-the-badge "Documentation badge"
+[license_file]: https://github.com/ferrilab/epw-rs/blob/main/LICENSE.txt "Project license"
+[license_img]: https://img.shields.io/crates/l/epw-rs.svg?style=for-the-badge "License badge"
