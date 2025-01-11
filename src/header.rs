@@ -85,10 +85,10 @@ pub enum PeriodType {
 
 #[derive(Debug)]
 pub struct TypicalExtremePeriod {
-    name: String,
-    period_type: PeriodType,
-    start: String,
-    end: String,
+    pub name: String,
+    pub period_type: PeriodType,
+    pub start: String,
+    pub end: String,
 }
 
 #[derive(Debug)]

@@ -23,8 +23,12 @@ rust-version = "1.80.0"
 
 [dependencies]
 chrono = { version = "0.4.39", features = ["serde"] }
+polars = { version = "0.45.1", optional = true }
 
 [lib]
 name = "epw_rs"
 path = "src/lib.rs"
+
+[features]
+polars = ["dep:polars"]
 
