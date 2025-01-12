@@ -154,7 +154,9 @@ pub struct PresentWeather {
 
 /// # EPW weather data
 ///
-/// The weather data from the file is provided in a column-oriented format for efficient analysis
+/// The weather data from the file is provided in a column-oriented format for efficient analysis.
+/// This library uses the convention of inserting NaN when a value is not available, rather than
+/// using the in-band magic numbers (e.g. 999) to signify missing data.
 ///
 #[derive(Debug)]
 pub struct WeatherData {

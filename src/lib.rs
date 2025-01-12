@@ -1,5 +1,5 @@
 #![doc = include_str!("../README.md")]
-mod epw_file;
+pub mod epw_file;
 mod error;
 pub mod header;
 pub mod weather_data;

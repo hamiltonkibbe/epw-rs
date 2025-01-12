@@ -28,6 +28,7 @@ println!("Header: {:?}\nData:   {:?}", epw.header, epw.data);
 - [x] Read Header and Data
 - [x] Polars DataFrame output
 - [ ] Lazy load data
+- [ ] PresentWeather Enum
 - [ ] Write EPW files
 
 
@@ -65,7 +66,7 @@ For a more detailed example see [examples/polars.rs](examples/polars.rs).
 <!-- Badges -->
 [crate_link]: https://crates.io/crates/epw-rs "Crate listing"
 [crate_img]: https://img.shields.io/crates/v/epw-rs?style=for-the-badge "Crate badge"
-[docs_link]: https://docs.rs/bitvec/latest/epw-rs "Crate documentation"
+[docs_link]: https://docs.rs/epw-rs/latest/epw-rs "Crate documentation"
 [docs_img]: https://img.shields.io/docsrs/epw-rs/latest.svg?style=for-the-badge "Documentation badge"
 [license_file]: https://github.com/ferrilab/epw-rs/blob/main/LICENSE.txt "Project license"
 [license_img]: https://img.shields.io/crates/l/epw-rs.svg?style=for-the-badge "License badge"

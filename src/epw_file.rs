@@ -1,4 +1,10 @@
-// https://designbuilder.co.uk/cahelp/Content/EnergyPlusWeatherFileFormat.htm
+/*!
+This module contains the definition for the [EPWFile] struct that the parsing API is built around.
+
+It implements two important methods, [EPWFile::from_path] and [EPWFile::from_reader], which handle
+parsing the specified file, or provided file content.
+
+*/
 use crate::error::EPWParseError;
 use crate::header::parse_header;
 use crate::weather_data::PresentWeather;
@@ -59,6 +65,7 @@ fn _parse_data<R: BufRead>(
     lines: &mut Lines<R>,
     header: &Header,
 ) -> Result<WeatherData, EPWParseError> {
+    // TODO: Don't panic
     let estimated_capacity = 8760 * header.data_periods.records_per_hour;
     let mut data = WeatherData {
         timestamp: Vec::with_capacity(estimated_capacity),
@@ -179,6 +186,214 @@ fn _parse_row(
         }
     };
 
+    let dry_bulb_temperature = match parts[6].parse() {
+        Ok(val) => match val != 99.9 {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Dry Bulb Temperature: {}",
+                e
+            )))
+        }
+    };
+
+    let dew_point_temperature = match parts[7].parse() {
+        Ok(val) => match val != 99.9 {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Dew Point Temperature: {}",
+                e
+            )))
+        }
+    };
+
+    let relative_humidity = match parts[8].parse() {
+        Ok(val) => match val != 999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Relative Humidity: {}",
+                e
+            )))
+        }
+    };
+
+    let atmospheric_pressure = match parts[9].parse() {
+        Ok(val) => match val != 999999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Atmospheric Pressure: {}",
+                e
+            )))
+        }
+    };
+
+    let extraterrestrial_horizontal_radiation = match parts[10].parse() {
+        Ok(val) => match val != 9999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Extraterrestrial Horizontal Radiation: {}",
+                e
+            )))
+        }
+    };
+
+    let extraterrestrial_direct_normal_radiation = match parts[11].parse() {
+        Ok(val) => match val != 9999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Extraterrestrial Direct Normal Radiation: {}",
+                e
+            )))
+        }
+    };
+
+    let horizontal_infrared_radiation_intensity = match parts[12].parse() {
+        Ok(val) => match val != 9999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Horizontal Infrared Radiation Intensity: {}",
+                e
+            )))
+        }
+    };
+
+    let global_horizontal_radiation = match parts[13].parse() {
+        Ok(val) => match val != 9999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Global Horizontal Radiation: {}",
+                e
+            )))
+        }
+    };
+
+    let direct_normal_radiation = match parts[14].parse() {
+        Ok(val) => match val != 9999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Direct Normal Radiation: {}",
+                e
+            )))
+        }
+    };
+
+    let diffuse_horizontal_radiation = match parts[15].parse() {
+        Ok(val) => match val != 9999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Diffuse Horizontal Radiation: {}",
+                e
+            )))
+        }
+    };
+
+    let global_horizontal_illuminance = match parts[16].parse() {
+        Ok(val) => match val < 999900. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Global Horizontal Illuminance: {}",
+                e
+            )))
+        }
+    };
+
+    let direct_normal_illuminance = match parts[17].parse() {
+        Ok(val) => match val < 999900. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Direct Normal Illuminance: {}",
+                e
+            )))
+        }
+    };
+
+    let diffuse_horizontal_illuminance = match parts[18].parse() {
+        Ok(val) => match val < 999900. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Diffuse Horizontal Illuminance: {}",
+                e
+            )))
+        }
+    };
+
+    let zenith_luminance = match parts[19].parse() {
+        Ok(val) => match val != 9999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Zenith Luminance: {}",
+                e
+            )))
+        }
+    };
+
+    let wind_direction = match parts[20].parse() {
+        Ok(val) => match val != 999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Wind Direction: {}",
+                e
+            )))
+        }
+    };
+
+     let wind_speed = match parts[21].parse() {
+        Ok(val) => match val != 999. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Wind Speed: {}",
+                e
+            )))
+        }
+    };
+
     let present_weather = _parse_present_weather(parts[27])?;
 
     let albedo = match parts.len() > 32 {
@@ -198,31 +413,30 @@ fn _parse_row(
 
     dest.timestamp.push(timestamp);
     dest.flags.push(parts[5].to_string());
-    dest.dry_bulb_temperature.push(parts[6].parse().unwrap());
-    dest.dew_point_temperature.push(parts[7].parse().unwrap());
-    dest.relative_humidity.push(parts[8].parse().unwrap());
-    dest.atmospheric_pressure.push(parts[9].parse().unwrap());
+    dest.dry_bulb_temperature.push(dry_bulb_temperature);
+    dest.dew_point_temperature.push(dew_point_temperature);
+    dest.relative_humidity.push(relative_humidity);
+    dest.atmospheric_pressure.push(atmospheric_pressure);
     dest.extraterrestrial_horizontal_radiation
-        .push(parts[10].parse().unwrap());
+        .push(extraterrestrial_horizontal_radiation);
     dest.extraterrestrial_direct_normal_radiation
-        .push(parts[11].parse().unwrap());
+        .push(extraterrestrial_direct_normal_radiation);
     dest.horizontal_infrared_radiation_intensity
-        .push(parts[12].parse().unwrap());
+        .push(horizontal_infrared_radiation_intensity);
     dest.global_horizontal_radiation
-        .push(parts[13].parse().unwrap());
-    dest.direct_normal_radiation
-        .push(parts[14].parse().unwrap());
+        .push(global_horizontal_radiation);
+    dest.direct_normal_radiation.push(direct_normal_radiation);
     dest.diffuse_horizontal_radiation
-        .push(parts[15].parse().unwrap());
+        .push(diffuse_horizontal_radiation);
     dest.global_horizontal_illuminance
-        .push(parts[16].parse().unwrap());
+        .push(global_horizontal_illuminance);
     dest.direct_normal_illuminance
-        .push(parts[17].parse().unwrap());
+        .push(direct_normal_illuminance);
     dest.diffuse_horizontal_illuminance
-        .push(parts[18].parse().unwrap());
-    dest.zenith_luminance.push(parts[19].parse().unwrap());
-    dest.wind_direction.push(parts[20].parse().unwrap());
-    dest.wind_speed.push(parts[21].parse().unwrap());
+        .push(diffuse_horizontal_illuminance);
+    dest.zenith_luminance.push(zenith_luminance);
+    dest.wind_direction.push(wind_direction);
+    dest.wind_speed.push(wind_speed);
     dest.total_sky_cover.push(parts[22].parse().unwrap());
     dest.opaque_sky_cover.push(parts[23].parse().unwrap());
     dest.visibility.push(parts[24].parse().unwrap());

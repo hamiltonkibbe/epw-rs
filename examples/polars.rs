@@ -1,4 +1,5 @@
 /*! Example demonstrating use of the polars feature to get weather data as a DataFrame!*/
+#[cfg(feature = "polars")]
 use epw_rs::EPWFile;
 
 #[cfg(feature = "polars")]
