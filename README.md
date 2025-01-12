@@ -3,7 +3,10 @@
 [![Documentation][docs_img]][docs_link]
 [![License][license_img]][license_file]
 
-## Parser for the Energy Plus Weather file format
+## Parser for the EnergyPlus Weather file format
+
+### Note:
+This library is still alpha-stage and the API is subject to change until we stabilize it in the 0.2 release.
 
 ## Summary
 Rust library for reading [EnergyPlus](https://github.com/NREL/EnergyPlus) weather data files. These files typically
@@ -12,6 +15,7 @@ contain detailed hourly (or sub-hourly) weather data for a given location used f
 ## Introduction
 The library presents a fairly small API, built around the `EPWFile` struct. It includes functions for reading from a 
 `BufRead` buffer, or from a filepath.
+
 
 ### Reading an EPW file
 
@@ -28,6 +32,7 @@ println!("Header: {:?}\nData:   {:?}", epw.header, epw.data);
 - [x] Read Header and Data
 - [x] Polars DataFrame output
 - [ ] Lazy load data
+- [ ] PresentWeather Enum
 - [ ] Write EPW files
 
 
@@ -65,7 +70,7 @@ For a more detailed example see [examples/polars.rs](examples/polars.rs).
 <!-- Badges -->
 [crate_link]: https://crates.io/crates/epw-rs "Crate listing"
 [crate_img]: https://img.shields.io/crates/v/epw-rs?style=for-the-badge "Crate badge"
-[docs_link]: https://docs.rs/bitvec/latest/epw-rs "Crate documentation"
+[docs_link]: https://docs.rs/epw-rs/latest/epw-rs "Crate documentation"
 [docs_img]: https://img.shields.io/docsrs/epw-rs/latest.svg?style=for-the-badge "Documentation badge"
 [license_file]: https://github.com/ferrilab/epw-rs/blob/main/LICENSE.txt "Project license"
 [license_img]: https://img.shields.io/crates/l/epw-rs.svg?style=for-the-badge "License badge"

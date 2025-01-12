@@ -1,4 +1,10 @@
-// https://designbuilder.co.uk/cahelp/Content/EnergyPlusWeatherFileFormat.htm
+/*!
+This module contains the definition for the [EPWFile] struct that the parsing API is built around.
+
+It implements two important methods, [EPWFile::from_path] and [EPWFile::from_reader], which handle
+parsing the specified file, or provided file content.
+
+*/
 use crate::error::EPWParseError;
 use crate::header::parse_header;
 use crate::weather_data::PresentWeather;
@@ -59,6 +65,7 @@ fn _parse_data<R: BufRead>(
     lines: &mut Lines<R>,
     header: &Header,
 ) -> Result<WeatherData, EPWParseError> {
+    // TODO: Don't panic
     let estimated_capacity = 8760 * header.data_periods.records_per_hour;
     let mut data = WeatherData {
         timestamp: Vec::with_capacity(estimated_capacity),
@@ -179,10 +186,78 @@ fn _parse_row(
         }
     };
 
+    let dry_bulb_temperature = _parse_float_value(parts[6], "Dry Bulb Temperature", 99.9)?;
+    let dew_point_temperature = _parse_float_value(parts[7], "Dew Point Temperature", 99.9)?;
+    let relative_humidity = _parse_float_value(parts[8], "Relative Humidity", 999.)?;
+    let atmospheric_pressure = _parse_float_value(parts[9], "Atmospheric Pressure", 999999.)?;
+    let extraterrestrial_horizontal_radiation =
+        _parse_float_value(parts[10], "Extraterrestrial Horizontal Radiation", 9999.)?;
+    let extraterrestrial_direct_normal_radiation =
+        _parse_float_value(parts[11], "Extraterrestrial Direct Normal Radiation", 9999.)?;
+    let horizontal_infrared_radiation_intensity =
+        _parse_float_value(parts[12], "Horizontal Infrared Radiation Intensity", 9999.)?;
+    let global_horizontal_radiation =
+        _parse_float_value(parts[13], "Global Horizontal Radiation", 9999.)?;
+    let direct_normal_radiation = _parse_float_value(parts[14], "Direct Normal Radiation", 9999.)?;
+    let diffuse_horizontal_radiation =
+        _parse_float_value(parts[15], "Diffuse Horizontal Radiation", 9999.)?;
+
+    let global_horizontal_illuminance = match parts[16].parse() {
+        Ok(val) => match val < 999900. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Global Horizontal Illuminance: {}",
+                e
+            )))
+        }
+    };
+
+    let direct_normal_illuminance = match parts[17].parse() {
+        Ok(val) => match val < 999900. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Direct Normal Illuminance: {}",
+                e
+            )))
+        }
+    };
+
+    let diffuse_horizontal_illuminance = match parts[18].parse() {
+        Ok(val) => match val < 999900. {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid Diffuse Horizontal Illuminance: {}",
+                e
+            )))
+        }
+    };
+
+    let zenith_luminance = _parse_float_value(parts[19], "Zenith Luminance", 9999.)?;
+    let wind_direction = _parse_float_value(parts[20], "Wind Direction", 999.)?;
+    let wind_speed = _parse_float_value(parts[21], "Wind Speed", 999.)?;
+    let total_sky_cover = _parse_float_value(parts[22], "Total Sky Cover", 99.)?;
+    let opaque_sky_cover = _parse_float_value(parts[23], "Opaque Sky Cover", 99.)?;
+    let visibility = _parse_float_value(parts[24], "Visibility", 9999.)?;
+    let ceiling_height = _parse_float_value(parts[25], "Ceiling Height", 99999.)?;
+
     let present_weather = _parse_present_weather(parts[27])?;
 
+    let precipitable_water = _parse_float_value(parts[28], "Precipitable water", 999.)?;
+    let aerosol_optical_depth = _parse_float_value(parts[29], "Aerosol Optical Depth", 999.)?;
+    let snow_depth = _parse_float_value(parts[30], "Snow Depth", 999.)?;
+    let days_since_last_snowfall = _parse_float_value(parts[31], "Days Since Last Snowfall", 99.)?;
+
     let albedo = match parts.len() > 32 {
-        true => parts[32].parse().unwrap(),
+        true => _parse_float_value(parts[32], "Albedo", 999.)?,
         false => f64::NAN,
     };
 
@@ -198,43 +273,41 @@ fn _parse_row(
 
     dest.timestamp.push(timestamp);
     dest.flags.push(parts[5].to_string());
-    dest.dry_bulb_temperature.push(parts[6].parse().unwrap());
-    dest.dew_point_temperature.push(parts[7].parse().unwrap());
-    dest.relative_humidity.push(parts[8].parse().unwrap());
-    dest.atmospheric_pressure.push(parts[9].parse().unwrap());
+    dest.dry_bulb_temperature.push(dry_bulb_temperature);
+    dest.dew_point_temperature.push(dew_point_temperature);
+    dest.relative_humidity.push(relative_humidity);
+    dest.atmospheric_pressure.push(atmospheric_pressure);
     dest.extraterrestrial_horizontal_radiation
-        .push(parts[10].parse().unwrap());
+        .push(extraterrestrial_horizontal_radiation);
     dest.extraterrestrial_direct_normal_radiation
-        .push(parts[11].parse().unwrap());
+        .push(extraterrestrial_direct_normal_radiation);
     dest.horizontal_infrared_radiation_intensity
-        .push(parts[12].parse().unwrap());
+        .push(horizontal_infrared_radiation_intensity);
     dest.global_horizontal_radiation
-        .push(parts[13].parse().unwrap());
-    dest.direct_normal_radiation
-        .push(parts[14].parse().unwrap());
+        .push(global_horizontal_radiation);
+    dest.direct_normal_radiation.push(direct_normal_radiation);
     dest.diffuse_horizontal_radiation
-        .push(parts[15].parse().unwrap());
+        .push(diffuse_horizontal_radiation);
     dest.global_horizontal_illuminance
-        .push(parts[16].parse().unwrap());
+        .push(global_horizontal_illuminance);
     dest.direct_normal_illuminance
-        .push(parts[17].parse().unwrap());
+        .push(direct_normal_illuminance);
     dest.diffuse_horizontal_illuminance
-        .push(parts[18].parse().unwrap());
-    dest.zenith_luminance.push(parts[19].parse().unwrap());
-    dest.wind_direction.push(parts[20].parse().unwrap());
-    dest.wind_speed.push(parts[21].parse().unwrap());
-    dest.total_sky_cover.push(parts[22].parse().unwrap());
-    dest.opaque_sky_cover.push(parts[23].parse().unwrap());
-    dest.visibility.push(parts[24].parse().unwrap());
-    dest.ceiling_height.push(parts[25].parse().unwrap());
+        .push(diffuse_horizontal_illuminance);
+    dest.zenith_luminance.push(zenith_luminance);
+    dest.wind_direction.push(wind_direction);
+    dest.wind_speed.push(wind_speed);
+    dest.total_sky_cover.push(total_sky_cover);
+    dest.opaque_sky_cover.push(opaque_sky_cover);
+    dest.visibility.push(visibility);
+    dest.ceiling_height.push(ceiling_height);
     dest.present_weather_observation.push(parts[26] == "0");
 
     dest.present_weather_codes.push(present_weather);
-    dest.precipitable_water.push(parts[28].parse().unwrap());
-    dest.aerosol_optical_depth.push(parts[29].parse().unwrap());
-    dest.snow_depth.push(parts[30].parse().unwrap());
-    dest.days_since_last_snowfall
-        .push(parts[31].parse().unwrap());
+    dest.precipitable_water.push(precipitable_water);
+    dest.aerosol_optical_depth.push(aerosol_optical_depth);
+    dest.snow_depth.push(snow_depth);
+    dest.days_since_last_snowfall.push(days_since_last_snowfall);
     dest.albedo.push(albedo);
     dest.liquid_precipitation_depth
         .push(liquid_precipitation_depth);
@@ -345,4 +418,20 @@ fn _parse_present_weather(condition_str: &str) -> Result<PresentWeather, EPWPars
         smoke,
         ice_pellets,
     })
+}
+
+fn _parse_float_value(value: &str, name: &str, missing_value: f64) -> Result<f64, EPWParseError> {
+    let value = match value.parse() {
+        Ok(val) => match val != missing_value {
+            true => val,
+            false => f64::NAN,
+        },
+        Err(e) => {
+            return Err(EPWParseError::Data(format!(
+                "Invalid {} value: {}",
+                name, e
+            )))
+        }
+    };
+    Ok(value)
 }
