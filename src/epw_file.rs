@@ -65,7 +65,6 @@ fn _parse_data<R: BufRead>(
     lines: &mut Lines<R>,
     header: &Header,
 ) -> Result<WeatherData, EPWParseError> {
-    // TODO: Don't panic
     let estimated_capacity = 8760 * header.data_periods.records_per_hour;
     let mut data = WeatherData {
         timestamp: Vec::with_capacity(estimated_capacity),
