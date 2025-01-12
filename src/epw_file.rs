@@ -8,6 +8,10 @@ use chrono::{FixedOffset, TimeZone};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
 
+/// EPWFile is the representation of the parsed file
+///
+/// it has only two attributes, `header` which is an instance of the [Header] struct,
+/// and `data` which contains the weather data in a [WeatherData] struct.
 #[derive(Debug)]
 pub struct EPWFile {
     pub header: Header,
@@ -27,16 +31,8 @@ impl EPWFile {
     ///
     pub fn from_reader<R: BufRead>(reader: R) -> Result<Self, EPWParseError> {
         let mut lines = reader.lines();
-        let header = match parse_header(&mut lines) {
-            Ok(val) => val,
-            Err(e) => return Err(e),
-        };
-        let data = match _parse_data(&mut lines, &header) {
-            Ok(val) => val,
-            Err(e) => {
-                return Err(e);
-            }
-        };
+        let header = parse_header(&mut lines)?;
+        let data = _parse_data(&mut lines, &header)?;
 
         Ok(Self { header, data })
     }
@@ -183,13 +179,20 @@ fn _parse_row(
         }
     };
 
-    let present_weather = match _parse_present_weather(parts[27]) {
-        Ok(val) => val,
-        Err(e) => return Err(e),
-    };
+    let present_weather = _parse_present_weather(parts[27])?;
 
     let albedo = match parts.len() > 32 {
         true => parts[32].parse().unwrap(),
+        false => f64::NAN,
+    };
+
+    let liquid_precipitation_depth = match parts.len() > 33 {
+        true => parts[33].parse().unwrap(),
+        false => f64::NAN,
+    };
+
+    let liquid_precipitation_quantity = match parts.len() > 34 {
+        true => parts[34].parse().unwrap(),
         false => f64::NAN,
     };
 
@@ -233,7 +236,10 @@ fn _parse_row(
     dest.days_since_last_snowfall
         .push(parts[31].parse().unwrap());
     dest.albedo.push(albedo);
-
+    dest.liquid_precipitation_depth
+        .push(liquid_precipitation_depth);
+    dest.liquid_precipitation_quantity
+        .push(liquid_precipitation_quantity);
     Ok(())
 }
 

@@ -9,17 +9,11 @@ fn main() {
         Ok(epw) => {
             let location = epw.header.location;
             let data = epw.data;
-            println!(
-                "Location: {:.4}, {:.4} [{}, {}]",
-                location.latitude,
-                location.longitude,
-                location.city,
-                location.state_province_region
-            );
             let max_temp = match data.dry_bulb_temperature.into_iter().reduce(f64::max) {
                 Some(t) => t,
                 None => panic!("Couldn't calculate max temperature"),
             };
+            println!("Location:        {}", location);
             println!("Max Temperature: {:.2}°C", max_temp);
         }
         Err(e) => println!("{:?}", e),

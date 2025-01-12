@@ -1,6 +1,7 @@
 use crate::error::EPWParseError;
 use chrono::FixedOffset;
 use std::collections::VecDeque;
+use std::fmt;
 use std::io::{BufRead, Lines};
 
 const LOCATION_KEY: &str = "LOCATION";
@@ -12,7 +13,7 @@ const HOLIDAYS_DAYLIGHT_SAVINGS_KEY: &str = "HOLIDAYS/DAYLIGHT SAVINGS";
 const COMMENTS_KEY: &str = "COMMENTS";
 const DATA_PERIODS_KEY: &str = "DATA PERIODS";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DayOfWeek {
     Sunday,
     Monday,
@@ -36,7 +37,17 @@ pub struct Location {
     pub elevation: f64,
 }
 
-#[derive(Debug)]
+impl fmt::Display for Location {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}°,{}° [{}, {} | {}]",
+            self.latitude, self.longitude, self.city, self.state_province_region, self.country
+        )
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct GroundTemperatureSample {
     pub depth: f64,
     pub soil_conductivity: Option<f64>,
@@ -77,7 +88,7 @@ pub struct DataPeriod {
     pub end_day: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum PeriodType {
     Typical,
     Extreme,
@@ -97,6 +108,7 @@ pub struct DataPeriods {
     pub periods: Vec<DataPeriod>,
 }
 
+/// EPW File header
 #[derive(Debug)]
 pub struct Header {
     pub location: Location,
@@ -659,7 +671,188 @@ fn _parse_holiday_daylight_savings(line: &str) -> Result<HolidayDaylightSavings,
 }
 
 fn _parse_design_conditions(line: &str) -> Vec<String> {
+    if !line.starts_with(DESIGN_CONDITIONS_KEY) {
+        panic!(
+            "_parse_design_conditions called with a line that doesn't start with '{}'",
+            DESIGN_CONDITIONS_KEY
+        );
+    }
+
     let mut parts: VecDeque<&str> = line.split(",").collect();
     parts.pop_front();
     parts.into_iter().map(String::from).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::BufReader;
+
+    const TEST_FILE: &str = "./data/USA_FL_Tampa_TMY2.epw";
+
+    fn _read_test_file() -> Lines<BufReader<File>> {
+        let file = File::open(TEST_FILE).unwrap();
+        let reader = BufReader::new(file);
+        reader.lines()
+    }
+
+    #[test]
+    fn test_parse_location_from_file() {
+        let mut lines = _read_test_file();
+        let header = parse_header(&mut lines);
+
+        assert!(header.is_ok());
+        let header = header.unwrap();
+        let location = header.location;
+
+        assert_eq!(location.city, "TAMPA");
+        assert_eq!(location.state_province_region, "FL");
+        assert_eq!(location.country, "USA");
+        assert_eq!(location.source, "TMY2-12842");
+        assert_eq!(location.wmo, "722110");
+        assert_eq!(location.latitude, 27.97);
+        assert_eq!(location.longitude, -82.53);
+        assert_eq!(
+            location.time_zone,
+            FixedOffset::east_opt(-5 * 3600).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_parse_typical_extreme_periods_from_file() {
+        let mut lines = _read_test_file();
+        let header = parse_header(&mut lines);
+
+        assert!(header.is_ok());
+        let header = header.unwrap();
+        let periods = header.typical_extreme_periods;
+        assert_eq!(6, periods.len());
+
+        assert_eq!(
+            "Summer - Week Nearest Max Temperature For Period",
+            periods[0].name
+        );
+        assert_eq!(PeriodType::Extreme, periods[0].period_type);
+        assert_eq!("7/ 6", periods[0].start);
+        assert_eq!("7/12", periods[0].end);
+
+        assert_eq!(
+            "Summer - Week Nearest Average Temperature For Period",
+            periods[1].name
+        );
+        assert_eq!(PeriodType::Typical, periods[1].period_type);
+        assert_eq!("8/ 3", periods[1].start);
+        assert_eq!("8/ 9", periods[1].end);
+
+        assert_eq!(
+            "Winter - Week Nearest Min Temperature For Period",
+            periods[2].name
+        );
+        assert_eq!(PeriodType::Extreme, periods[2].period_type);
+        assert_eq!("2/10", periods[2].start);
+        assert_eq!("2/16", periods[2].end);
+
+        assert_eq!(
+            "Winter - Week Nearest Average Temperature For Period",
+            periods[3].name
+        );
+        assert_eq!(PeriodType::Typical, periods[3].period_type);
+        assert_eq!("12/22", periods[3].start);
+        assert_eq!("1/ 5", periods[3].end);
+
+        assert_eq!(
+            "Autumn - Week Nearest Average Temperature For Period",
+            periods[4].name
+        );
+        assert_eq!(PeriodType::Typical, periods[4].period_type);
+        assert_eq!("10/20", periods[4].start);
+        assert_eq!("10/26", periods[4].end);
+
+        assert_eq!(
+            "Spring - Week Nearest Average Temperature For Period",
+            periods[5].name
+        );
+        assert_eq!(PeriodType::Typical, periods[5].period_type);
+        assert_eq!("4/19", periods[5].start);
+        assert_eq!("4/25", periods[5].end);
+    }
+
+    #[test]
+    fn test_parse_ground_temperature_from_file() {
+        let mut lines = _read_test_file();
+        let header = parse_header(&mut lines);
+
+        assert!(header.is_ok());
+        let header = header.unwrap();
+        let temperatures = header.ground_temperatures;
+
+        assert_eq!(3, temperatures.len());
+
+        assert_eq!(
+            GroundTemperatureSample {
+                depth: 0.5,
+                soil_conductivity: None,
+                soil_density: None,
+                soil_specific_heat: None,
+                january: 16.22,
+                february: 17.29,
+                march: 19.37,
+                april: 21.34,
+                may: 25.08,
+                june: 27.04,
+                july: 27.58,
+                august: 26.59,
+                september: 24.28,
+                october: 21.42,
+                november: 18.59,
+                december: 16.72,
+            },
+            temperatures[0]
+        );
+
+        assert_eq!(
+            GroundTemperatureSample {
+                depth: 2.0,
+                soil_conductivity: None,
+                soil_density: None,
+                soil_specific_heat: None,
+                january: 17.69,
+                february: 17.95,
+                march: 19.14,
+                april: 20.46,
+                may: 23.33,
+                june: 25.17,
+                july: 26.08,
+                august: 25.87,
+                september: 24.56,
+                october: 22.58,
+                november: 20.35,
+                december: 18.60,
+            },
+            temperatures[1]
+        );
+
+        assert_eq!(
+            GroundTemperatureSample {
+                depth: 4.0,
+                soil_conductivity: None,
+                soil_density: None,
+                soil_specific_heat: None,
+                january: 19.22,
+                february: 19.03,
+                march: 19.55,
+                april: 20.3,
+                may: 22.2,
+                june: 23.62,
+                july: 24.54,
+                august: 24.77,
+                september: 24.19,
+                october: 23.02,
+                november: 21.51,
+                december: 20.15,
+            },
+            temperatures[2]
+        );
+    }
 }

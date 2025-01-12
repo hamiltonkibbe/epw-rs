@@ -19,49 +19,47 @@ Heres a basic example of using the library to read a TMY file in epw format.
 ```rust
 use epw_rs::*;
 
-fn main() {
-    let epw = EPWFile::from_path("./data/USA_FL_Tampa_TMY2.epw").unwrap();
-    println!("Header: {}\nData:   {}", epw.header, epw.data);
-}
+let epw = EPWFile::from_path("./data/USA_FL_Tampa_TMY2.epw").unwrap();
+println!("Header: {:?}\nData:   {:?}", epw.header, epw.data);
+
 ```
+
+## Feature Roadmap
+- [x] Read Header and Data
+- [x] Polars DataFrame output
+- [ ] Lazy load data
+- [ ] Write EPW files
 
 
 ## Features
 
 ### `polars`
 
-The `polars` feature provides support for returning weather data as a dataframe
+The `polars` feature provides support for building a DataFrame from the weather data
 
-```rust
+```rust,ignore
 use epw_rs::*;
-fn main() {
-    let epw = EPWFile::from_path("./data/USA_FL_Tampa_TMY2.epw").unwrap();
-    let df = epw.data.to_dataframe();
-}
 
-// Output: 
-┌─────────────────────┬──────────────────────┬───────────────────────┬───────────────────┬───┬───────────────────────┬────────────┬──────────────────────────┬────────┐
-│ timestamp           ┆ dry_bulb_temperature ┆ dew_point_temperature ┆ relative_humidity ┆ … ┆ aerosol_optical_depth ┆ snow_depth ┆ days_since_last_snowfall ┆ albedo │
-│ ---                 ┆ ---                  ┆ ---                   ┆ ---               ┆   ┆ ---                   ┆ ---        ┆ ---                      ┆ ---    │
-│ datetime[ms]        ┆ f64                  ┆ f64                   ┆ f64               ┆   ┆ f64                   ┆ f64        ┆ f64                      ┆ f64    │
-╞═════════════════════╪══════════════════════╪═══════════════════════╪═══════════════════╪═══╪═══════════════════════╪════════════╪══════════════════════════╪════════╡
-│ 1987-01-01 05:00:00 ┆ 20.6                 ┆ 18.9                  ┆ 90.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
-│ 1987-01-01 06:00:00 ┆ 20.0                 ┆ 18.3                  ┆ 90.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
-│ 1987-01-01 07:00:00 ┆ 20.0                 ┆ 17.2                  ┆ 84.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
-│ 1987-01-01 08:00:00 ┆ 18.3                 ┆ 16.1                  ┆ 87.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
-│ 1987-01-01 09:00:00 ┆ 17.8                 ┆ 15.0                  ┆ 84.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
-│ …                   ┆ …                    ┆ …                     ┆ …                 ┆ … ┆ …                     ┆ …          ┆ …                        ┆ …      │
 
+let epw = EPWFile::from_path("./data/USA_FL_Tampa_TMY2.epw").unwrap();
+let df = epw.data.to_dataframe();
+println!("{}", df.unwrap())
+
+// output: 
+// ┌─────────────────────┬──────────────────────┬───────────────────────┬───────────────────┬───┬───────────────────────┬────────────┬──────────────────────────┬────────┐
+// │ timestamp           ┆ dry_bulb_temperature ┆ dew_point_temperature ┆ relative_humidity ┆ … ┆ aerosol_optical_depth ┆ snow_depth ┆ days_since_last_snowfall ┆ albedo │
+// │ ---                 ┆ ---                  ┆ ---                   ┆ ---               ┆   ┆ ---                   ┆ ---        ┆ ---                      ┆ ---    │
+// │ datetime[ms]        ┆ f64                  ┆ f64                   ┆ f64               ┆   ┆ f64                   ┆ f64        ┆ f64                      ┆ f64    │
+// ╞═════════════════════╪══════════════════════╪═══════════════════════╪═══════════════════╪═══╪═══════════════════════╪════════════╪══════════════════════════╪════════╡
+// │ 1987-01-01 05:00:00 ┆ 20.6                 ┆ 18.9                  ┆ 90.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+// │ 1987-01-01 06:00:00 ┆ 20.0                 ┆ 18.3                  ┆ 90.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+// │ 1987-01-01 07:00:00 ┆ 20.0                 ┆ 17.2                  ┆ 84.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+// │ 1987-01-01 08:00:00 ┆ 18.3                 ┆ 16.1                  ┆ 87.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+// │ 1987-01-01 09:00:00 ┆ 17.8                 ┆ 15.0                  ┆ 84.0              ┆ … ┆ 0.062                 ┆ 0.0        ┆ 88.0                     ┆ NaN    │
+// │ …                   ┆ …                    ┆ …                     ┆ …                 ┆ … ┆ …                     ┆ …          ┆ …                        ┆ …      │
 ```
 
 For a more detailed example see [examples/polars.rs](examples/polars.rs).
-
-
-
-
-## Features
-- [x] Read Header and Data
-- [ ] Lazy load data
 
 
 <!-- Badges -->

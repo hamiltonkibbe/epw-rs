@@ -1,6 +1,6 @@
 [package]
 name = "epw-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 categories = [
@@ -23,7 +23,7 @@ rust-version = "1.80.0"
 
 [dependencies]
 chrono = { version = "0.4.39", features = ["serde"] }
-polars = { version = "0.45.1", optional = true }
+polars = { version = "0.45.1", features = ["dtype-u8"], optional = true }
 
 [lib]
 name = "epw_rs"

@@ -1,8 +1,8 @@
 #![doc = include_str!("../README.md")]
 mod epw_file;
 mod error;
-mod header;
-mod weather_data;
+pub mod header;
+pub mod weather_data;
 
 pub use epw_file::EPWFile;
 pub use header::Header;
