@@ -23,8 +23,10 @@ Heres a basic example of using the library to read a TMY file in epw format.
 ```rust
 use epw_rs::*;
 
-let epw = EPWFile::from_path("./data/USA_FL_Tampa_TMY2.epw").unwrap();
-println!("Header: {:?}\nData:   {:?}", epw.header, epw.data);
+let mut epw = EPWFile::from_path("./data/USA_FL_Tampa_TMY2.epw").unwrap();
+
+let header = epw.get_header().clone;
+println!("Header: {:?}\nData:   {:?}", header, epw.get_data());
 
 ```
 

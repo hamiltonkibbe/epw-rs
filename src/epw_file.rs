@@ -19,12 +19,13 @@ use std::io::{BufRead, BufReader, Lines};
 /// it has only two attributes, `header` which is an instance of the [Header] struct,
 /// and `data` which contains the weather data in a [WeatherData] struct.
 #[derive(Debug)]
-pub struct EPWFile {
-    pub header: Header,
-    pub data: WeatherData,
+pub struct EPWFile<R: BufRead> {
+    header: Header,
+    data: Option<WeatherData>,
+    content: Lines<R>,
 }
 
-impl EPWFile {
+impl<R: BufRead> EPWFile<R> {
     /// Construct an EPWFile instance from a buffered reader.
     /// ## Type Parameters
     ///  - `R`: the type of the reader
@@ -35,14 +36,28 @@ impl EPWFile {
     /// ## Returns
     /// An initialized EPWReader or an EPWParseError
     ///
-    pub fn from_reader<R: BufRead>(reader: R) -> Result<Self, EPWParseError> {
+    pub fn from_reader(reader: R) -> Result<Self, EPWParseError> {
         let mut lines = reader.lines();
         let header = parse_header(&mut lines)?;
-        let data = _parse_data(&mut lines, &header)?;
+        //let data = _parse_data(&mut lines, &header)?;
 
-        Ok(Self { header, data })
+        Ok(Self { header, data: None, content: lines })
     }
 
+    pub fn get_header(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn get_data(&mut self) -> Result<&WeatherData, EPWParseError> {
+        if self.data.is_none() {
+            let data = _parse_data(&mut self.content, &self.header)?;
+            self.data = Some(data);
+        }
+        Ok(self.data.as_ref().unwrap())
+    }
+}
+
+impl EPWFile<BufReader<File>> {
     /// Create an EPWFile instance from a file path
     ///
     /// ## Parameters
@@ -50,13 +65,13 @@ impl EPWFile {
     ///
     /// ## Returns
     /// An initialized EPWFile or an EPWParseError
-    pub fn from_path(path: &str) -> Result<Self, EPWParseError> {
+    pub fn from_path<>(path: &str) -> Result<Self, EPWParseError> {
         let f = match File::open(path) {
             Ok(val) => val,
             Err(e) => return Err(EPWParseError::FileNotFound(e.to_string())),
         };
 
-        let reader = BufReader::new(f);
+        let reader: BufReader<File> = BufReader::new(f);
         Self::from_reader(reader)
     }
 }
