@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
-
-#![cfg_attr(feature = "polars", doc = r##"
+#![cfg_attr(
+    feature = "polars",
+    doc = r##"
 ## Features
 
 ### `polars`
@@ -30,7 +31,8 @@ println!("{}", df.unwrap())
 ```
 
 For a more detailed example see [examples/polars.rs](examples/polars.rs).
-"##)]
+"##
+)]
 pub mod epw_file;
 mod error;
 pub mod header;

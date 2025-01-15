@@ -1,8 +1,8 @@
-use std::io::{BufRead, Lines};
-use chrono::{DateTime, FixedOffset, TimeZone};
-use chrono::LocalResult::Single;
 use crate::error::EPWParseError;
 use crate::Header;
+use chrono::LocalResult::Single;
+use chrono::{DateTime, FixedOffset, TimeZone};
+use std::io::{BufRead, Lines};
 
 /// Present Weather codes
 ///
@@ -154,13 +154,11 @@ pub struct PresentWeather {
     pub ice_pellets: u8,
 }
 
-
 impl PresentWeather {
     pub(crate) fn parse(value: &str) -> Result<Self, EPWParseError> {
         _parse_present_weather(value)
     }
 }
-
 
 /// # EPW weather data
 ///
@@ -264,13 +262,14 @@ pub struct WeatherData {
     pub liquid_precipitation_quantity: Vec<f64>,
 }
 
-
 impl WeatherData {
-    pub fn parse<R: BufRead>(lines: &mut Lines<R>, header: &Header) -> Result<WeatherData, EPWParseError> {
+    pub fn parse<R: BufRead>(
+        lines: &mut Lines<R>,
+        header: &Header,
+    ) -> Result<WeatherData, EPWParseError> {
         _parse_data(lines, header)
     }
 }
-
 
 fn _parse_data<R: BufRead>(
     lines: &mut Lines<R>,
@@ -646,7 +645,6 @@ fn _parse_float_value(value: &str, name: &str, missing_value: f64) -> Result<f64
     Ok(value)
 }
 
-
 /// Functionalitu included in the `polars` feature
 ///
 /// This module includes a single additional method: [WeatherData::to_dataframe] which returns the
@@ -658,7 +656,6 @@ pub mod polars_ext {
     use polars::prelude::*;
 
     impl WeatherData {
-
         ///Return the WeatherData instance as a polars [DataFrame].
         ///
         /// **Note: Requires the `polars` feature to be enabled.**
@@ -673,12 +670,8 @@ pub mod polars_ext {
                 .iter()
                 .map(|dt| dt.timestamp_millis())
                 .collect();
-            let timestamp = match Series::new("timestamp".into(), millisecond_timestamps)
-                .cast(&DataType::Datetime(TimeUnit::Milliseconds, None))
-            {
-                Ok(ts) => ts,
-                Err(e) => return Err(e),
-            };
+            let timestamp = Series::new("timestamp".into(), millisecond_timestamps)
+                .cast(&DataType::Datetime(TimeUnit::Milliseconds, None))?;
 
             let series_length = self.present_weather_codes.len();
             let mut present_thunderstorm: Vec<u8> = Vec::with_capacity(series_length);
@@ -750,21 +743,20 @@ pub mod polars_ext {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
+    use super::*;
     #[cfg(feature = "polars")]
     use polars::frame::DataFrame;
-    use super::*;
 
-   fn _get_test_data() -> WeatherData {
-      let tz =  FixedOffset::east_opt(0).unwrap();
+    fn _get_test_data() -> WeatherData {
+        let tz = FixedOffset::east_opt(0).unwrap();
         let ts = match tz.with_ymd_and_hms(1990, 1, 1, 0, 0, 0) {
             Single(val) => val,
             _ => panic!("Invalid timestamp"),
         };
-         WeatherData{
+        WeatherData {
             timestamp: vec![ts],
             flags: vec!["flags".to_string()],
             dry_bulb_temperature: vec![1.0],
@@ -797,7 +789,7 @@ mod tests {
                 sleet: 5,
                 fog: 6,
                 smoke: 7,
-                ice_pellets: 8
+                ice_pellets: 8,
             }],
             precipitable_water: vec![21.0],
             aerosol_optical_depth: vec![22.0],
@@ -807,8 +799,7 @@ mod tests {
             liquid_precipitation_depth: vec![26.0],
             liquid_precipitation_quantity: vec![27.0],
         }
-   }
-
+    }
 
     #[cfg(feature = "polars")]
     #[test]
@@ -862,41 +853,77 @@ mod tests {
         })
     }
 
-     #[cfg(feature = "polars")]
+    #[cfg(feature = "polars")]
     #[test]
     fn test_to_dataframe_returns_appropriate_values() {
         let data = _get_test_data();
         let df = data.to_dataframe().unwrap();
-        assert_eq!(1.0, _get_value_from_df(&df, "dry_bulb_temperature",0));
-         assert_eq!(2.0, _get_value_from_df(&df, "dew_point_temperature", 0));
-         assert_eq!(3.0,_get_value_from_df(&df, "relative_humidity", 0));
-         assert_eq!(4.0, _get_value_from_df(&df, "atmospheric_pressure", 0));
-         assert_eq!(5.0, _get_value_from_df(&df, "extraterrestrial_horizontal_radiation", 0));
-         assert_eq!(6.0, _get_value_from_df(&df, "extraterrestrial_direct_normal_radiation", 0));
-         assert_eq!(7.0, _get_value_from_df(&df, "horizontal_infrared_radiation_intensity", 0));
-         assert_eq!(8.0, _get_value_from_df(&df, "global_horizontal_radiation", 0));
-         assert_eq!(9.0, _get_value_from_df(&df, "direct_normal_radiation", 0 ));
-         assert_eq!(10.0, _get_value_from_df(&df, "diffuse_horizontal_radiation", 0));
-         assert_eq!(11.0, _get_value_from_df(&df, "global_horizontal_illuminance", 0));
-         assert_eq!(12.0, _get_value_from_df(&df, "direct_normal_illuminance", 0));
-         assert_eq!(13.0, _get_value_from_df(&df, "diffuse_horizontal_illuminance", 0));
-         assert_eq!(14.0, _get_value_from_df(&df, "zenith_luminance", 0));
-         assert_eq!(15.0, _get_value_from_df(&df, "wind_direction", 0));
-         assert_eq!(16.0, _get_value_from_df(&df, "wind_speed", 0));
-         assert_eq!(17.0, _get_value_from_df(&df, "total_sky_cover", 0));
-         assert_eq!(18.0, _get_value_from_df(&df, "opaque_sky_cover", 0));
-         assert_eq!(19.0, _get_value_from_df(&df, "visibility", 0));
-         assert_eq!(20.0, _get_value_from_df(&df, "ceiling_height", 0));
-         assert_eq!(21.0, _get_value_from_df(&df, "precipitable_water", 0));
-         assert_eq!(22.0, _get_value_from_df(&df, "aerosol_optical_depth", 0));
-         assert_eq!(23.0, _get_value_from_df(&df, "snow_depth", 0));
-         assert_eq!(24.0, _get_value_from_df(&df, "days_since_last_snowfall", 0));
-         assert_eq!(25.0, _get_value_from_df(&df, "albedo", 0));
-         assert_eq!(26.0, _get_value_from_df(&df, "liquid_precipitation_depth", 0));
-         assert_eq!(27.0, _get_value_from_df(&df, "liquid_precipitation_quantity", 0));
+        assert_eq!(1.0, _get_value_from_df(&df, "dry_bulb_temperature", 0));
+        assert_eq!(2.0, _get_value_from_df(&df, "dew_point_temperature", 0));
+        assert_eq!(3.0, _get_value_from_df(&df, "relative_humidity", 0));
+        assert_eq!(4.0, _get_value_from_df(&df, "atmospheric_pressure", 0));
+        assert_eq!(
+            5.0,
+            _get_value_from_df(&df, "extraterrestrial_horizontal_radiation", 0)
+        );
+        assert_eq!(
+            6.0,
+            _get_value_from_df(&df, "extraterrestrial_direct_normal_radiation", 0)
+        );
+        assert_eq!(
+            7.0,
+            _get_value_from_df(&df, "horizontal_infrared_radiation_intensity", 0)
+        );
+        assert_eq!(
+            8.0,
+            _get_value_from_df(&df, "global_horizontal_radiation", 0)
+        );
+        assert_eq!(9.0, _get_value_from_df(&df, "direct_normal_radiation", 0));
+        assert_eq!(
+            10.0,
+            _get_value_from_df(&df, "diffuse_horizontal_radiation", 0)
+        );
+        assert_eq!(
+            11.0,
+            _get_value_from_df(&df, "global_horizontal_illuminance", 0)
+        );
+        assert_eq!(
+            12.0,
+            _get_value_from_df(&df, "direct_normal_illuminance", 0)
+        );
+        assert_eq!(
+            13.0,
+            _get_value_from_df(&df, "diffuse_horizontal_illuminance", 0)
+        );
+        assert_eq!(14.0, _get_value_from_df(&df, "zenith_luminance", 0));
+        assert_eq!(15.0, _get_value_from_df(&df, "wind_direction", 0));
+        assert_eq!(16.0, _get_value_from_df(&df, "wind_speed", 0));
+        assert_eq!(17.0, _get_value_from_df(&df, "total_sky_cover", 0));
+        assert_eq!(18.0, _get_value_from_df(&df, "opaque_sky_cover", 0));
+        assert_eq!(19.0, _get_value_from_df(&df, "visibility", 0));
+        assert_eq!(20.0, _get_value_from_df(&df, "ceiling_height", 0));
+        assert_eq!(21.0, _get_value_from_df(&df, "precipitable_water", 0));
+        assert_eq!(22.0, _get_value_from_df(&df, "aerosol_optical_depth", 0));
+        assert_eq!(23.0, _get_value_from_df(&df, "snow_depth", 0));
+        assert_eq!(24.0, _get_value_from_df(&df, "days_since_last_snowfall", 0));
+        assert_eq!(25.0, _get_value_from_df(&df, "albedo", 0));
+        assert_eq!(
+            26.0,
+            _get_value_from_df(&df, "liquid_precipitation_depth", 0)
+        );
+        assert_eq!(
+            27.0,
+            _get_value_from_df(&df, "liquid_precipitation_quantity", 0)
+        );
     }
 
+    #[cfg(feature = "polars")]
     fn _get_value_from_df(df: &DataFrame, column: &str, row: usize) -> f64 {
-       df.column(column).expect("Missing column").f64().expect("not a float").get(row).expect("Missing Row")
+        df.column(column)
+            .expect("Missing column")
+            .f64()
+            .expect("not a float")
+            .get(row)
+            .expect("Missing Row")
     }
 }

@@ -120,7 +120,6 @@ pub struct Header {
     pub data_periods: DataPeriods,
 }
 
-
 impl Header {
     pub(crate) fn parse<R: BufRead>(lines: &mut Lines<R>) -> Result<Self, EPWParseError> {
         parse_header(lines)

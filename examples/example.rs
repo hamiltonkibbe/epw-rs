@@ -9,7 +9,12 @@ fn main() {
         Ok(mut epw) => {
             println!("Location:        {}", epw.get_header().location);
             let data = epw.get_data().unwrap();
-            let max_temp = match data.dry_bulb_temperature.clone().into_iter().reduce(f64::max) {
+            let max_temp = match data
+                .dry_bulb_temperature
+                .clone()
+                .into_iter()
+                .reduce(f64::max)
+            {
                 Some(t) => t,
                 None => panic!("Couldn't calculate max temperature"),
             };

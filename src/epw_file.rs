@@ -10,7 +10,7 @@ use crate::{Header, WeatherData};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
 
-#[cfg(feature="polars")]
+#[cfg(feature = "polars")]
 use polars::frame::DataFrame;
 
 /// EPWFile is the representation of the parsed file
@@ -38,7 +38,11 @@ impl<R: BufRead> EPWFile<R> {
     pub fn from_reader(reader: R) -> Result<Self, EPWParseError> {
         let mut lines = reader.lines();
         let header = Header::parse(&mut lines)?;
-        Ok(Self { header, data: None, content: lines })
+        Ok(Self {
+            header,
+            data: None,
+            content: lines,
+        })
     }
 
     pub fn get_header(&self) -> &Header {
@@ -53,7 +57,7 @@ impl<R: BufRead> EPWFile<R> {
         Ok(self.data.as_ref().unwrap())
     }
 
-    #[cfg(feature="polars")]
+    #[cfg(feature = "polars")]
     pub fn get_dataframe(&mut self) -> Result<DataFrame, EPWParseError> {
         let data = self.get_data()?;
         match data.to_dataframe() {
@@ -71,7 +75,7 @@ impl EPWFile<BufReader<File>> {
     ///
     /// ## Returns
     /// An initialized EPWFile or an EPWParseError
-    pub fn from_path<>(path: &str) -> Result<Self, EPWParseError> {
+    pub fn from_path(path: &str) -> Result<Self, EPWParseError> {
         let f = match File::open(path) {
             Ok(val) => val,
             Err(e) => return Err(EPWParseError::FileNotFound(e.to_string())),
