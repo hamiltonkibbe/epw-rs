@@ -120,7 +120,14 @@ pub struct Header {
     pub data_periods: DataPeriods,
 }
 
-pub fn parse_header<R: BufRead>(lines: &mut Lines<R>) -> Result<Header, EPWParseError> {
+
+impl Header {
+    pub(crate) fn parse<R: BufRead>(lines: &mut Lines<R>) -> Result<Self, EPWParseError> {
+        parse_header(lines)
+    }
+}
+
+fn parse_header<R: BufRead>(lines: &mut Lines<R>) -> Result<Header, EPWParseError> {
     let mut location: Option<Location> = None;
     let mut design_conditions: Option<Vec<String>> = None;
     let mut typical_extreme_periods: Option<Vec<TypicalExtremePeriod>> = None;
