@@ -103,7 +103,12 @@ fn _parse_data<R: BufRead>(
 
     for line in lines {
         let line = line.expect("Unable to read line");
-        _parse_row(&line, &mut data, &header.location.time_zone)?
+        _parse_row(
+            &line,
+            &mut data,
+            &header.location.time_zone,
+            header.data_periods.records_per_hour,
+        )?
     }
 
     Ok(data)
@@ -113,6 +118,7 @@ fn _parse_row(
     line: &str,
     dest: &mut WeatherData,
     timezone: &FixedOffset,
+    records_per_hour: usize,
 ) -> Result<(), EPWParseError> {
     let parts = line.split(",").collect::<Vec<&str>>();
     if parts.len() < 32 {
@@ -156,7 +162,7 @@ fn _parse_row(
             )))
         }
     };
-    let minute = match parts[4].parse() {
+    let minute: u32 = match parts[4].parse() {
         Ok(val) => val,
         Err(e) => {
             return Err(EPWParseError::Data(format!(
@@ -166,17 +172,15 @@ fn _parse_row(
         }
     };
 
-    let timestamp = match timezone.with_ymd_and_hms(
-        year,
-        month,
-        day,
-        hour - 1,
-        match minute == 60 {
-            true => 0,
-            false => minute,
-        },
-        0,
-    ) {
+    // A record covers the interval that ends at its hour and minute; the timestamp
+    // is the start of that interval, so hourly "hour 1, minute 60" is 00:00 and the
+    // fourth of four records in hour 1 ("hour 1, minute 60") is 00:45.
+    let start_minute = match records_per_hour > 1 {
+        true => minute.saturating_sub(60 / records_per_hour as u32),
+        false if minute == 60 => 0,
+        false => minute,
+    };
+    let timestamp = match timezone.with_ymd_and_hms(year, month, day, hour - 1, start_minute, 0) {
         Single(val) => val,
         _ => {
             return Err(EPWParseError::Data(format!(
@@ -252,7 +256,7 @@ fn _parse_row(
     let present_weather = _parse_present_weather(parts[27])?;
 
     let precipitable_water = _parse_float_value(parts[28], "Precipitable water", 999.)?;
-    let aerosol_optical_depth = _parse_float_value(parts[29], "Aerosol Optical Depth", 999.)?;
+    let aerosol_optical_depth = _parse_float_value(parts[29], "Aerosol Optical Depth", 0.999)?;
     let snow_depth = _parse_float_value(parts[30], "Snow Depth", 999.)?;
     let days_since_last_snowfall = _parse_float_value(parts[31], "Days Since Last Snowfall", 99.)?;
 
@@ -262,12 +266,12 @@ fn _parse_row(
     };
 
     let liquid_precipitation_depth = match parts.len() > 33 {
-        true => parts[33].parse().unwrap(),
+        true => _parse_float_value(parts[33], "Liquid Precipitation Depth", 999.)?,
         false => f64::NAN,
     };
 
     let liquid_precipitation_quantity = match parts.len() > 34 {
-        true => parts[34].parse().unwrap(),
+        true => _parse_float_value(parts[34], "Liquid Precipitation Quantity", 99.)?,
         false => f64::NAN,
     };
 

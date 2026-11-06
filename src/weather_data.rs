@@ -160,7 +160,8 @@ pub struct PresentWeather {
 ///
 #[derive(Debug)]
 pub struct WeatherData {
-    /// Timestamps for the weather data samples
+    /// Timestamps for the weather data samples: the start of the interval each record
+    /// covers (an EPW record's hour and minute mark the end of its interval)
     pub timestamp: Vec<DateTime<FixedOffset>>,
 
     /// Data Source and validity flags. The format is not documented

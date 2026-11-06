@@ -251,7 +251,12 @@ fn _parse_location(line: &str) -> Result<Location, EPWParseError> {
         }
     };
 
-    let time_zone = match FixedOffset::east_opt(parts[8].parse::<f64>().unwrap() as i32 * 3600) {
+    // Time zones are hours from UTC and may be fractional (India +5.5, Nepal +5.75).
+    let time_zone = match parts[8]
+        .parse::<f64>()
+        .ok()
+        .and_then(|hours| FixedOffset::east_opt((hours * 3600.0).round() as i32))
+    {
         Some(val) => val,
         None => {
             return Err(EPWParseError::Location(format!(
